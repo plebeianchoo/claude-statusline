@@ -1,0 +1,10 @@
+# Safety: this repo is PUBLIC. Never let Claude Code state files in.
+.credentials.json
+history.jsonl
+sessions/
+projects/
+shell-snapshots/
+session-env/
+paste-cache/
+file-history/
+*.log
