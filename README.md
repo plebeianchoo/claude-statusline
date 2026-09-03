@@ -3,7 +3,7 @@
 A custom statusline for [Claude Code](https://claude.com/claude-code).
 
 ```
-~/projects/demo · main · Opus 5 · $1.23 · ctx left 62% · 5h ████░░░░░░ 38% 2h14m left
+~/projects/demo · main · Opus 5 · $1.23 · ctx 62% · ████░░░░░░ 38% 2h14m left
 ```
 
 Shows, left to right: working directory · git branch · model · session cost ·
@@ -36,9 +36,45 @@ Restart Claude Code to pick it up.
 
 ## Requirements
 
-`bash` 4+ (uses `+=` and C-style `for`) and `jq`. Git is optional — the branch
-segment is skipped outside a repo, and uses `--no-optional-locks` so it never
-writes to the repository being displayed.
+| Tool | Why | Required? |
+|---|---|---|
+| `bash` 4.2+ | The bar is built with `printf '%b'` over `\uXXXX` escapes, and `\u` support in `printf` landed in bash 4.2. macOS ships bash 3.2 at `/bin/bash`, where the bar renders as the literal text `\u2588` — install a newer one (`brew install bash`). The shebang is `/usr/bin/env bash`, so it picks up whichever bash comes first on `PATH`. | **Yes** |
+| `jq` | Parses the JSON status payload Claude Code writes to stdin. Every field — cwd, model, cost, context, rate limits — comes through it. | **Yes** |
+| `git` | The branch segment. Uses `--no-optional-locks`, so it never writes to the repo being displayed. | No — segment is skipped if absent, or outside a work tree |
+| `date` | `date +%s` for the reset countdown. Only `%s` is used — POSIX, so BSD/macOS `date` works unmodified. | **Yes**, but universally present |
+| `printf`, `cat` | Output and reading stdin. Both bash builtins or coreutils. | **Yes** (always present) |
+
+Verified against: bash 5.2.21, jq 1.7, git 2.43.0, GNU coreutils 9.4.
+
+### Terminal
+
+| Need | Detail |
+|---|---|
+| UTF-8 locale | The bar draws `█` (U+2588) and `░` (U+2591). With a non-UTF-8 `LANG` these render as mojibake. Check with `locale`; expect something ending in `.UTF-8`. |
+| A font covering U+2588/U+2591 | Nearly every monospace programming font does. If the bar shows as boxes, the font is the cause, not the script. |
+| 256-color ANSI | The cost segment uses `\033[38;5;220m`. In a 16-color terminal it degrades to a default color rather than breaking. |
+
+Over SSH, the locale is the usual culprit — many clients forward `LANG` from
+the *local* machine. If the bar looks wrong only over SSH, that's why.
+
+### Install the required tools
+
+```sh
+# Debian/Ubuntu
+sudo apt install jq git
+
+# macOS
+brew install jq git bash
+
+# Fedora
+sudo dnf install jq git
+```
+
+Verify everything at once:
+
+```sh
+bash --version | head -1 && jq --version && git --version && locale | grep LANG
+```
 
 ## Testing a change
 

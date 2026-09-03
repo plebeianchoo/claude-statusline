@@ -39,7 +39,7 @@ if [ -n "$remaining" ]; then
   else
     ctx_color=$GREEN
   fi
-  ctx_fmt=$(printf 'ctx left %d%%' "$rem_int")
+  ctx_fmt=$(printf 'ctx %d%%' "$rem_int")
   ctx_part="${ctx_color}${ctx_fmt}${RESET}"
 else
   ctx_part=""
@@ -62,7 +62,7 @@ if [ -n "$five_hour" ]; then
   for ((i = 0; i < cells; i++)); do
     if [ "$i" -lt "$filled" ]; then bar+="\u2588"; else bar+="\u2591"; fi
   done
-  five_fmt=$(printf '5h %b %d%%' "$bar" "$five_int")
+  five_fmt=$(printf '%b %d%%' "$bar" "$five_int")
   five_part="${five_color}${five_fmt}${RESET}"
 
   # Time left until the 5h window resets
