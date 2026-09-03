@@ -62,11 +62,11 @@ else
   SEP=' \u2502 '
 fi
 
-# 10-step green -> yellow -> red gradients, one per rendering tier.
-GRAD_R=(46 116 186 241 239 236 233 231 211 192)
-GRAD_G=(204 195 186 196 161 126 101 76 66 57)
-GRAD_B=(113 89 64 15 24 34 44 60 50 43)
-GRAD256=(46 82 118 154 190 226 214 208 202 196)
+# 10-step rainbow gradient (violet -> red), one per rendering tier.
+GRAD_R=(204 68 0 0 0 0 102 238 255 255)
+GRAD_G=(0 0 68 204 255 255 255 255 136 0)
+GRAD_B=(255 255 255 255 170 34 0 0 0 0)
+GRAD256=(165 57 27 45 49 47 118 226 214 196)
 
 # render_bar PCT -> writes a 10-cell gradient/ASCII bar (raw escape bytes) to $bar_out
 render_bar() {

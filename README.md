@@ -12,18 +12,21 @@ Two lines, segments joined by a straight powerline-style divider. Line 1: brand 
 rate-limit usage as a gradient bar, with time until the window resets. Line
 2: working directory · git branch (with a branch icon).
 
-Both percentages read as *consumption* and climb toward their limit, colored
-green, yellow from 70%, red from 90%. The payload reports context as
-remaining, so the script inverts it.
+Both percentages read as *consumption* and climb toward their limit; the
+percentage text is colored green, yellow from 70%, red from 90%, while the
+bar itself is a fixed violet→red rainbow gradient (decorative, not a
+severity signal). The payload reports context as remaining, so the script
+inverts it.
 
 ## Rendering tiers
 
 Color capability cascades through three tiers, picked once per run:
 
-1. **True color** — a smooth 24-bit green→yellow→red gradient, per cell of
-   the bar. Enabled when `COLORTERM=truecolor` or `COLORTERM=24bit` (most
-   modern terminals set this automatically).
-2. **256-color** — the same gradient shape approximated with `\033[38;5;Nm`
+1. **True color** — a smooth 24-bit rainbow gradient (violet→blue→cyan→
+   green→yellow→orange→red), per cell of the bar. Enabled when
+   `COLORTERM=truecolor` or `COLORTERM=24bit` (most modern terminals set
+   this automatically).
+2. **256-color** — the same rainbow shape approximated with `\033[38;5;Nm`
    codes. The default when true color isn't detected.
 3. **ASCII** — no color codes or Unicode at all; bars render as `#`/`-`, the
    brand mark as `<>`, and the segment separator as a plain `|` instead of
