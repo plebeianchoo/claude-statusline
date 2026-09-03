@@ -20,16 +20,28 @@ fi
 
 input=$(cat)
 
-raw_dir=$(jq -r '.workspace.current_dir // .cwd // "?"' <<<"$input")
+# One jq call for every field, in a fixed order matched by the reads below —
+# avoids spawning a separate jq process per field on every render.
+parsed=$(jq -r '
+  (.workspace.current_dir // .cwd // "?"),
+  (.model.display_name // .model.id // "?"),
+  (.cost.total_cost_usd // 0),
+  (.context_window.remaining_percentage // ""),
+  (.rate_limits.five_hour.used_percentage // ""),
+  (.rate_limits.five_hour.resets_at // "")
+' <<<"$input")
+
+{
+  IFS= read -r raw_dir
+  IFS= read -r model
+  IFS= read -r cost
+  IFS= read -r remaining
+  IFS= read -r five_hour
+  IFS= read -r five_reset
+} <<<"$parsed"
+
 dir=${raw_dir/#$HOME/\~}
-
-model=$(jq -r '.model.display_name // .model.id // "?"' <<<"$input")
-cost=$(jq -r '.cost.total_cost_usd // 0' <<<"$input")
 cost_fmt=$(printf '$%.2f' "$cost")
-
-remaining=$(jq -r '.context_window.remaining_percentage // empty' <<<"$input")
-five_hour=$(jq -r '.rate_limits.five_hour.used_percentage // empty' <<<"$input")
-five_reset=$(jq -r '.rate_limits.five_hour.resets_at // empty' <<<"$input")
 
 if [[ "$USE_ASCII" == "1" ]]; then
   RESET='' DIM='' CYAN='' GREEN='' YELLOW='' RED='' MAGENTA='' GOLD='' PURPLE=''
