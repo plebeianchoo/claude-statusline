@@ -31,15 +31,18 @@ if git --no-optional-locks -C "$raw_dir" rev-parse --is-inside-work-tree >/dev/n
 fi
 
 if [ -n "$remaining" ]; then
+  # Report context *used*, so it climbs as the window fills — same direction as
+  # the 5h bar. The payload gives remaining, so invert it.
   rem_int=${remaining%.*}
-  if [ "$rem_int" -le 10 ]; then
+  used_int=$(( 100 - rem_int ))
+  if [ "$used_int" -ge 90 ]; then
     ctx_color=$RED
-  elif [ "$rem_int" -le 30 ]; then
+  elif [ "$used_int" -ge 70 ]; then
     ctx_color=$YELLOW
   else
     ctx_color=$GREEN
   fi
-  ctx_fmt=$(printf 'ctx %d%%' "$rem_int")
+  ctx_fmt=$(printf 'ctx %d%%' "$used_int")
   ctx_part="${ctx_color}${ctx_fmt}${RESET}"
 else
   ctx_part=""
@@ -74,9 +77,9 @@ if [ -n "$five_hour" ]; then
     if [ "$secs" -gt 0 ]; then
       mins=$(( (secs + 59) / 60 ))   # round up, so it never reads 0m while time remains
       if [ "$mins" -ge 60 ]; then
-        left_fmt=$(printf '%dh%02dm left' $((mins / 60)) $((mins % 60)))
+        left_fmt=$(printf '%dh%02dm' $((mins / 60)) $((mins % 60)))
       else
-        left_fmt=$(printf '%dm left' "$mins")
+        left_fmt=$(printf '%dm' "$mins")
       fi
       five_part="${five_part} ${DIM}${left_fmt}${RESET}"
     fi
