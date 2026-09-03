@@ -14,7 +14,7 @@ rate-limit usage as a gradient bar, with time until the window resets. Line
 
 Both percentages read as *consumption* and climb toward their limit; the
 percentage text is colored green, yellow from 70%, red from 90%, while the
-bar itself is a fixed violet→red rainbow gradient (decorative, not a
+bar itself is a fixed blue→red rainbow gradient (decorative, not a
 severity signal). The payload reports context as remaining, so the script
 inverts it.
 
@@ -22,8 +22,8 @@ inverts it.
 
 Color capability cascades through three tiers, picked once per run:
 
-1. **True color** — a smooth 24-bit rainbow gradient (violet→blue→cyan→
-   green→yellow→orange→red) across 20 color steps. The bar is 10 terminal
+1. **True color** — a smooth 24-bit rainbow gradient (blue→cyan→green→
+   yellow→orange→red) across 20 color steps. The bar is 10 terminal
    columns wide, and each fully-lit column is a half-block glyph (`▐`) whose
    background paints its left half and foreground its right half — two
    independent gradient colors per column, since that's the most a single

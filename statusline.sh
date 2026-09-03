@@ -74,15 +74,15 @@ else
   SEP=' \u2502 '
 fi
 
-# 20-step rainbow gradient (violet -> red): 10 terminal columns, 2 sub-steps
+# 20-step rainbow gradient (blue -> red): 10 terminal columns, 2 sub-steps
 # each. Each column is a half-block glyph (▐) whose background carries the
 # left sub-step's color and whose foreground carries the right sub-step's --
 # a terminal cell only has two color slots (fg/bg), so 2 steps per column is
 # the ceiling; at 10 columns that caps total resolution at 20 steps, not 40.
-GRAD_R=(204 140 75 11 0 0 0 0 0 0 0 0 59 123 188 252 255 255 255 255)
-GRAD_G=(0 0 0 0 54 118 183 247 255 255 255 255 255 255 255 255 193 129 64 0)
-GRAD_B=(255 255 255 255 255 255 255 255 199 134 70 5 0 0 0 0 0 0 0 0)
-GRAD256=(165 129 57 21 27 33 45 51 50 49 47 46 82 118 190 226 220 214 202 196)
+GRAD_R=(1 0 0 0 0 0 0 0 0 0 27 80 134 188 241 255 255 255 255 255)
+GRAD_G=(0 53 107 161 214 255 255 255 255 255 255 255 255 255 255 215 161 107 54 0)
+GRAD_B=(255 255 255 255 255 242 188 135 81 27 0 0 0 0 0 0 0 0 0 0)
+GRAD256=(21 27 33 39 45 51 50 49 48 47 82 118 154 190 226 220 214 208 202 196)
 
 # Fractional 1/8-of-a-column glyphs for the single column where fill status
 # is transitioning, so the bar's leading edge advances in 1/8 steps instead
