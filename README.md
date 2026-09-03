@@ -3,16 +3,39 @@
 A custom statusline for [Claude Code](https://claude.com/claude-code).
 
 ```
-~/projects/demo · main · Opus 5 · $1.23 · ctx 38% · ████░░░░░░ 38% 2h14m left
+◆ ~/projects/demo · ⎇main · Opus 5 · $1.23 · ████░░░░░░ 38% · ████░░░░░░ 38% 2h14m left
 ```
 
-Shows, left to right: working directory · git branch · model · session cost ·
-context window used · 5-hour rate-limit usage as a 10-cell bar, with time until
-the window resets.
+Shows, left to right: brand mark · working directory · git branch (with a
+branch icon) · model · session cost · context window used as a gradient bar ·
+5-hour rate-limit usage as a gradient bar, with time until the window resets.
 
-Both percentages read as *consumption* and climb toward their limit, and share
-one color scale: green, yellow from 70%, red from 90%. The payload reports
-context as remaining, so the script inverts it.
+Both bars read as *consumption* and climb toward their limit, colored green,
+yellow from 70%, red from 90%. The payload reports context as remaining, so
+the script inverts it.
+
+## Rendering tiers
+
+Color capability cascades through three tiers, picked once per run:
+
+1. **True color** — a smooth 24-bit green→yellow→red gradient, per cell of
+   the bar. Enabled when `COLORTERM=truecolor` or `COLORTERM=24bit` (most
+   modern terminals set this automatically).
+2. **256-color** — the same gradient shape approximated with `\033[38;5;Nm`
+   codes. The default when true color isn't detected.
+3. **ASCII** — no color codes or Unicode at all; bars render as `#`/`-` and
+   the brand mark as `<>`. Force it with `CLAUDE_STATUSLINE_ASCII=1` for
+   dumb terminals, logging, or copy-pasting the statusline as plain text.
+
+## Configuration
+
+Environment variables (set in `~/.zshrc` or `~/.bashrc`):
+
+| Variable | Default | Effect |
+|---|---|---|
+| `CLAUDE_STATUSLINE_ASCII` | `0` | `1` forces the plain ASCII tier, no color |
+| `CLAUDE_STATUSLINE_POWERLINE` | `0` | `1` swaps the ` · ` segment separator for a powerline arrow (``) — needs a Nerd/powerline font |
+| `COLORTERM` | unset | `truecolor` or `24bit` enables the true-color gradient tier |
 
 ## Install
 

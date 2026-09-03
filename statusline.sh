@@ -1,5 +1,22 @@
 #!/usr/bin/env bash
-# Claude Code statusline: cwd · git branch · model · session cost · context left · 5h rate limit
+# Claude Code statusline: brand · cwd · git branch · model · session cost · context left · 5h rate limit
+#
+# Env vars:
+#   CLAUDE_STATUSLINE_ASCII=1     force plain ASCII (no color, no unicode bars)
+#   CLAUDE_STATUSLINE_POWERLINE=1 use a powerline arrow () as the segment separator
+#   COLORTERM=truecolor|24bit     enables the 24-bit gradient bars (set by most modern terminals)
+#
+# Rendering cascades three tiers: truecolor gradient -> 256-color gradient -> ASCII,
+# picked once at the top and used for every colored segment below.
+set -uo pipefail
+
+USE_ASCII="${CLAUDE_STATUSLINE_ASCII:-0}"
+USE_POWERLINE="${CLAUDE_STATUSLINE_POWERLINE:-0}"
+USE_TRUECOLOR=0
+if [[ "${COLORTERM:-}" == "truecolor" || "${COLORTERM:-}" == "24bit" ]]; then
+  USE_TRUECOLOR=1
+fi
+
 input=$(cat)
 
 raw_dir=$(jq -r '.workspace.current_dir // .cwd // "?"' <<<"$input")
@@ -13,15 +30,78 @@ remaining=$(jq -r '.context_window.remaining_percentage // empty' <<<"$input")
 five_hour=$(jq -r '.rate_limits.five_hour.used_percentage // empty' <<<"$input")
 five_reset=$(jq -r '.rate_limits.five_hour.resets_at // empty' <<<"$input")
 
-RESET='\033[0m'
-DIM='\033[2m'
-CYAN='\033[36m'
-BLUE='\033[34m'
-GREEN='\033[32m'
-YELLOW='\033[33m'
-RED='\033[31m'
-MAGENTA='\033[35m'
-GOLD='\033[38;5;220m'
+if [[ "$USE_ASCII" == "1" ]]; then
+  RESET='' DIM='' CYAN='' BLUE='' GREEN='' YELLOW='' RED='' MAGENTA='' GOLD='' PURPLE=''
+else
+  RESET='\033[0m'
+  DIM='\033[2m'
+  CYAN='\033[36m'
+  BLUE='\033[34m'
+  GREEN='\033[32m'
+  YELLOW='\033[33m'
+  RED='\033[31m'
+  MAGENTA='\033[35m'
+  GOLD='\033[38;5;220m'
+  # Anthropic brand purple (#7266EA), degrading by tier.
+  if (( USE_TRUECOLOR )); then
+    PURPLE='\033[38;2;114;102;234m'
+  else
+    PURPLE='\033[38;5;99m'
+  fi
+fi
+
+# Symbols and separator per tier.
+if [[ "$USE_ASCII" == "1" ]]; then
+  S_BRAND='<>'
+  S_BRANCH='>'
+  SEP=' | '
+elif [[ "$USE_POWERLINE" == "1" ]]; then
+  S_BRAND='◆'
+  S_BRANCH='⎇'
+  SEP='  '
+else
+  S_BRAND='◆'
+  S_BRANCH='⎇'
+  SEP=' · '
+fi
+
+# 10-step green -> yellow -> red gradients, one per rendering tier.
+GRAD_R=(46 116 186 241 239 236 233 231 211 192)
+GRAD_G=(204 195 186 196 161 126 101 76 66 57)
+GRAD_B=(113 89 64 15 24 34 44 60 50 43)
+GRAD256=(46 82 118 154 190 226 214 208 202 196)
+
+# render_bar PCT -> writes a 10-cell gradient/ASCII bar (raw escape bytes) to $bar_out
+render_bar() {
+  local pct=$1 cells=10 filled i bar=""
+  filled=$(( (pct * cells + 99) / 100 ))
+  (( filled > cells )) && filled=$cells
+  (( filled < 0 )) && filled=0
+  if [[ "$USE_ASCII" == "1" ]]; then
+    for (( i = 0; i < cells; i++ )); do
+      if (( i < filled )); then bar+='#'; else bar+='-'; fi
+    done
+  elif (( USE_TRUECOLOR )); then
+    for (( i = 0; i < cells; i++ )); do
+      if (( i < filled )); then
+        bar+="\033[38;2;${GRAD_R[$i]};${GRAD_G[$i]};${GRAD_B[$i]}m█"
+      else
+        bar+='\033[38;2;60;60;60m░'
+      fi
+    done
+    bar+="$RESET"
+  else
+    for (( i = 0; i < cells; i++ )); do
+      if (( i < filled )); then
+        bar+="\033[38;5;${GRAD256[$i]}m█"
+      else
+        bar+='\033[38;5;240m░'
+      fi
+    done
+    bar+="$RESET"
+  fi
+  bar_out=$(printf '%b' "$bar")
+}
 
 # Git branch (skip optional locks so this never blocks/writes to the repo)
 branch=""
@@ -42,8 +122,8 @@ if [ -n "$remaining" ]; then
   else
     ctx_color=$GREEN
   fi
-  ctx_fmt=$(printf 'ctx %d%%' "$used_int")
-  ctx_part="${ctx_color}${ctx_fmt}${RESET}"
+  render_bar "$used_int"
+  ctx_part=$(printf '%s %b%d%%%b' "$bar_out" "$ctx_color" "$used_int" "$RESET")
 else
   ctx_part=""
 fi
@@ -57,16 +137,8 @@ if [ -n "$five_hour" ]; then
   else
     five_color=$GREEN
   fi
-  # Bar: 10 cells, filled proportionally to usage (round up so 1% shows one cell)
-  cells=10
-  filled=$(( (five_int * cells + 99) / 100 ))
-  [ "$filled" -gt "$cells" ] && filled=$cells
-  bar=""
-  for ((i = 0; i < cells; i++)); do
-    if [ "$i" -lt "$filled" ]; then bar+="\u2588"; else bar+="\u2591"; fi
-  done
-  five_fmt=$(printf '%b %d%%' "$bar" "$five_int")
-  five_part="${five_color}${five_fmt}${RESET}"
+  render_bar "$five_int"
+  five_part=$(printf '%s %b%d%%%b' "$bar_out" "$five_color" "$five_int" "$RESET")
 
   # Time left until the 5h window resets. Guard the arithmetic: resets_at is an
   # epoch integer today, but a non-numeric value would otherwise make bash emit
@@ -88,15 +160,16 @@ else
   five_part=""
 fi
 
+printf "${PURPLE}%b${RESET} " "$S_BRAND"
 printf "${CYAN}%s${RESET}" "$dir"
 if [ -n "$branch" ]; then
-  printf " · ${MAGENTA}%s${RESET}" "$branch"
+  printf "%b${MAGENTA}%b%s${RESET}" "$SEP" "$S_BRANCH" "$branch"
 fi
-printf " · ${BLUE}%s${RESET} · ${GOLD}%s${RESET}" "$model" "$cost_fmt"
+printf "%b${BLUE}%s${RESET}%b${GOLD}%s${RESET}" "$SEP" "$model" "$SEP" "$cost_fmt"
 if [ -n "$ctx_part" ]; then
-  printf " · %b" "$ctx_part"
+  printf "%b%b" "$SEP" "$ctx_part"
 fi
 if [ -n "$five_part" ]; then
-  printf " · %b" "$five_part"
+  printf "%b%b" "$SEP" "$five_part"
 fi
 printf '\n'
