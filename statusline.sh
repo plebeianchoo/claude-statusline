@@ -74,37 +74,56 @@ else
   SEP=' \u2502 '
 fi
 
-# 10-step rainbow gradient (violet -> red), one per rendering tier.
-GRAD_R=(204 68 0 0 0 0 102 238 255 255)
-GRAD_G=(0 0 68 204 255 255 255 255 136 0)
-GRAD_B=(255 255 255 255 170 34 0 0 0 0)
-GRAD256=(165 57 27 45 49 47 118 226 214 196)
+# 40-step rainbow gradient (violet -> red): 20 terminal columns, 2 sub-steps
+# each. Each column is a half-block glyph (▐) whose background carries the
+# left sub-step's color and whose foreground carries the right sub-step's —
+# a terminal cell only has two color slots (fg/bg), so this is the ceiling
+# for color resolution per column; going further needs more columns, not
+# more colors per column.
+GRAD_R=(204 173 141 110 78 47 16 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 8 39 71 102 133 165 196 228 255 255 255 255 255 255 255 255 255)
+GRAD_G=(0 0 0 0 0 0 0 16 47 78 110 141 173 204 235 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 251 220 188 157 126 94 63 31 0)
+GRAD_B=(255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 243 212 180 149 118 86 55 24 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+GRAD256=(165 129 129 93 93 57 21 21 27 33 33 39 39 45 51 51 50 50 49 48 48 47 46 46 82 82 118 154 154 190 190 226 220 220 214 208 208 202 202 196)
 
-# render_bar PCT -> writes a 10-cell gradient/ASCII bar (raw escape bytes) to $bar_out
+# render_bar PCT -> writes a 20-column/40-step gradient (or plain ASCII) bar
+# (raw escape bytes) to $bar_out
 render_bar() {
-  local pct=$1 cells=10 filled i bar=""
-  filled=$(( (pct * cells + 99) / 100 ))
-  (( filled > cells )) && filled=$cells
+  local pct=$1 cols=20 steps=40 filled i p0 p1 bar=""
+  filled=$(( (pct * steps + 99) / 100 ))
+  (( filled > steps )) && filled=$steps
   (( filled < 0 )) && filled=0
   if [[ "$USE_ASCII" == "1" ]]; then
-    for (( i = 0; i < cells; i++ )); do
-      if (( i < filled )); then bar+='#'; else bar+='-'; fi
+    local ascii_filled=$(( filled / 2 ))
+    for (( i = 0; i < cols; i++ )); do
+      if (( i < ascii_filled )); then bar+='#'; else bar+='-'; fi
     done
   elif (( USE_TRUECOLOR )); then
-    for (( i = 0; i < cells; i++ )); do
-      if (( i < filled )); then
-        bar+="\033[38;2;${GRAD_R[$i]};${GRAD_G[$i]};${GRAD_B[$i]}m█"
+    for (( i = 0; i < cols; i++ )); do
+      p0=$(( i * 2 )); p1=$(( p0 + 1 ))
+      if (( p0 < filled )); then
+        bar+="\033[48;2;${GRAD_R[$p0]};${GRAD_G[$p0]};${GRAD_B[$p0]}m"
       else
-        bar+='\033[38;2;60;60;60m░'
+        bar+='\033[48;2;60;60;60m'
+      fi
+      if (( p1 < filled )); then
+        bar+="\033[38;2;${GRAD_R[$p1]};${GRAD_G[$p1]};${GRAD_B[$p1]}m▐"
+      else
+        bar+='\033[38;2;60;60;60m▐'
       fi
     done
     bar+="$RESET"
   else
-    for (( i = 0; i < cells; i++ )); do
-      if (( i < filled )); then
-        bar+="\033[38;5;${GRAD256[$i]}m█"
+    for (( i = 0; i < cols; i++ )); do
+      p0=$(( i * 2 )); p1=$(( p0 + 1 ))
+      if (( p0 < filled )); then
+        bar+="\033[48;5;${GRAD256[$p0]}m"
       else
-        bar+='\033[38;5;240m░'
+        bar+='\033[48;5;240m'
+      fi
+      if (( p1 < filled )); then
+        bar+="\033[38;5;${GRAD256[$p1]}m▐"
+      else
+        bar+='\033[38;5;240m▐'
       fi
     done
     bar+="$RESET"
