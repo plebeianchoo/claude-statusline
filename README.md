@@ -23,23 +23,27 @@ inverts it.
 Color capability cascades through three tiers, picked once per run:
 
 1. **True color** — a smooth 24-bit rainbow gradient (violet→blue→cyan→
-   green→yellow→orange→red) across 20 steps. The bar is 10 terminal columns
-   wide, and each column is a half-block glyph (`▐`) whose background paints
-   its left half and foreground its right half — two independent gradient
-   colors per column, since that's the most a single terminal cell can carry
-   (one fg + one bg slot; there's no way to fit more colors into one glyph,
-   so 20 steps at 10 columns is the ceiling). Enabled when
-   `COLORTERM=truecolor` or `COLORTERM=24bit` (most modern terminals set
-   this automatically).
-2. **256-color** — the same 10-column/20-step shape approximated with
-   `\033[38;5;Nm`/`\033[48;5;Nm` codes. The default when true color isn't
-   detected.
+   green→yellow→orange→red) across 20 color steps. The bar is 10 terminal
+   columns wide, and each fully-lit column is a half-block glyph (`▐`) whose
+   background paints its left half and foreground its right half — two
+   independent gradient colors per column, since that's the most a single
+   terminal cell can carry (one fg + one bg slot; there's no way to fit more
+   colors into one glyph, so 20 color steps at 10 columns is the ceiling).
+   On top of that, the single column where the bar's fill is transitioning
+   renders as a fractional glyph (`▏▎▍▌▋▊▉`) instead of snapping straight to
+   lit or unlit — the leading edge moves in 1/8-column steps, so small
+   percentage changes are visible even within one column's width. Enabled
+   when `COLORTERM=truecolor` or `COLORTERM=24bit` (most modern terminals
+   set this automatically).
+2. **256-color** — the same 10-column/20-step shape and 1/8-column edge
+   approximated with `\033[38;5;Nm`/`\033[48;5;Nm` codes. The default when
+   true color isn't detected.
 3. **ASCII** — no color codes or Unicode at all; the bar becomes 10 plain
-   `#`/`-` characters (one fill test per column, no sub-column split since
-   there's no color to carry it), the brand mark becomes `<>`, and the
-   segment separator becomes a plain `|` instead of the straight divider
-   (`│`). Force it with `CLAUDE_STATUSLINE_ASCII=1` for dumb terminals,
-   logging, or copy-pasting the statusline as plain text.
+   `#`/`-` characters at whole-column resolution (no fractional edge — there's
+   no color to carry the glyph's shape distinction), the brand mark becomes
+   `<>`, and the segment separator becomes a plain `|` instead of the
+   straight divider (`│`). Force it with `CLAUDE_STATUSLINE_ASCII=1` for
+   dumb terminals, logging, or copy-pasting the statusline as plain text.
 
 ## Configuration
 
@@ -90,8 +94,8 @@ Verified against: bash 5.2.21, jq 1.7, git 2.43.0, GNU coreutils 9.4.
 
 | Need | Detail |
 |---|---|
-| UTF-8 locale | The bar draws `▐` (U+2590, RIGHT HALF BLOCK). With a non-UTF-8 `LANG` this renders as mojibake. Check with `locale`; expect something ending in `.UTF-8`. |
-| A font covering U+2590 | Nearly every monospace programming font does. If the bar shows as boxes, the font is the cause, not the script. |
+| UTF-8 locale | The bar draws `▐` (U+2590) plus the eighth-block glyphs `▏▎▍▌▋▊▉` (U+258F–U+2589) at the transition edge. With a non-UTF-8 `LANG` these render as mojibake. Check with `locale`; expect something ending in `.UTF-8`. |
+| A font covering U+2588–U+259F | The "Block Elements" Unicode block — nearly every monospace programming font covers it. If the bar shows as boxes, the font is the cause, not the script. |
 | 256-color ANSI | The cost segment uses `\033[38;5;220m`. In a 16-color terminal it degrades to a default color rather than breaking. |
 
 Over SSH, the locale is the usual culprit — many clients forward `LANG` from

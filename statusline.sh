@@ -76,7 +76,7 @@ fi
 
 # 20-step rainbow gradient (violet -> red): 10 terminal columns, 2 sub-steps
 # each. Each column is a half-block glyph (▐) whose background carries the
-# left sub-step's color and whose foreground carries the right sub-step's —
+# left sub-step's color and whose foreground carries the right sub-step's --
 # a terminal cell only has two color slots (fg/bg), so 2 steps per column is
 # the ceiling; at 10 columns that caps total resolution at 20 steps, not 40.
 GRAD_R=(204 140 75 11 0 0 0 0 0 0 0 0 59 123 188 252 255 255 255 255)
@@ -84,45 +84,54 @@ GRAD_G=(0 0 0 0 54 118 183 247 255 255 255 255 255 255 255 255 193 129 64 0)
 GRAD_B=(255 255 255 255 255 255 255 255 199 134 70 5 0 0 0 0 0 0 0 0)
 GRAD256=(165 129 57 21 27 33 45 51 50 49 47 46 82 118 190 226 220 214 202 196)
 
-# render_bar PCT -> writes a 10-column/20-step gradient (or plain ASCII) bar
-# (raw escape bytes) to $bar_out
+# Fractional 1/8-of-a-column glyphs for the single column where fill status
+# is transitioning, so the bar's leading edge advances in 1/8 steps instead
+# of snapping a whole column (or half-column) at once. Index 0 and 8 are
+# unused -- those are the fully-empty/fully-lit cases, handled separately.
+EIGHTHS=('' '▏' '▎' '▍' '▌' '▋' '▊' '▉')
+
+# render_bar PCT -> writes a 10-column/20-step gradient bar, with a 1/8-cell
+# fractional glyph at the transition column, to $bar_out (raw escape bytes).
+# ASCII tier stays whole-column resolution -- there's no color to carry a
+# fractional glyph's shape distinction anyway.
 render_bar() {
-  local pct=$1 cols=10 steps=20 filled i p0 p1 bar=""
-  filled=$(( (pct * steps + 99) / 100 ))
-  (( filled > steps )) && filled=$steps
-  (( filled < 0 )) && filled=0
+  local pct=$1 cols=10 total_eighths col_eighths i p0 p1 bar=""
+  total_eighths=$(( (pct * cols * 8 + 99) / 100 ))
+  (( total_eighths > cols * 8 )) && total_eighths=$(( cols * 8 ))
+  (( total_eighths < 0 )) && total_eighths=0
+
   if [[ "$USE_ASCII" == "1" ]]; then
-    local ascii_filled=$(( filled / 2 ))
+    local ascii_filled=$(( total_eighths / 8 ))
     for (( i = 0; i < cols; i++ )); do
       if (( i < ascii_filled )); then bar+='#'; else bar+='-'; fi
     done
   elif (( USE_TRUECOLOR )); then
     for (( i = 0; i < cols; i++ )); do
       p0=$(( i * 2 )); p1=$(( p0 + 1 ))
-      if (( p0 < filled )); then
-        bar+="\033[48;2;${GRAD_R[$p0]};${GRAD_G[$p0]};${GRAD_B[$p0]}m"
+      col_eighths=$(( total_eighths - i * 8 ))
+      (( col_eighths < 0 )) && col_eighths=0
+      (( col_eighths > 8 )) && col_eighths=8
+      if (( col_eighths == 8 )); then
+        bar+="\033[48;2;${GRAD_R[$p0]};${GRAD_G[$p0]};${GRAD_B[$p0]}m\033[38;2;${GRAD_R[$p1]};${GRAD_G[$p1]};${GRAD_B[$p1]}m▐"
+      elif (( col_eighths == 0 )); then
+        bar+='\033[48;2;60;60;60m\033[38;2;60;60;60m▐'
       else
-        bar+='\033[48;2;60;60;60m'
-      fi
-      if (( p1 < filled )); then
-        bar+="\033[38;2;${GRAD_R[$p1]};${GRAD_G[$p1]};${GRAD_B[$p1]}m▐"
-      else
-        bar+='\033[38;2;60;60;60m▐'
+        bar+="\033[48;2;60;60;60m\033[38;2;${GRAD_R[$p0]};${GRAD_G[$p0]};${GRAD_B[$p0]}m${EIGHTHS[$col_eighths]}"
       fi
     done
     bar+="$RESET"
   else
     for (( i = 0; i < cols; i++ )); do
       p0=$(( i * 2 )); p1=$(( p0 + 1 ))
-      if (( p0 < filled )); then
-        bar+="\033[48;5;${GRAD256[$p0]}m"
+      col_eighths=$(( total_eighths - i * 8 ))
+      (( col_eighths < 0 )) && col_eighths=0
+      (( col_eighths > 8 )) && col_eighths=8
+      if (( col_eighths == 8 )); then
+        bar+="\033[48;5;${GRAD256[$p0]}m\033[38;5;${GRAD256[$p1]}m▐"
+      elif (( col_eighths == 0 )); then
+        bar+='\033[48;5;240m\033[38;5;240m▐'
       else
-        bar+='\033[48;5;240m'
-      fi
-      if (( p1 < filled )); then
-        bar+="\033[38;5;${GRAD256[$p1]}m▐"
-      else
-        bar+='\033[38;5;240m▐'
+        bar+="\033[48;5;240m\033[38;5;${GRAD256[$p0]}m${EIGHTHS[$col_eighths]}"
       fi
     done
     bar+="$RESET"
