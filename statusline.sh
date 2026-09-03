@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-# Claude Code statusline: brand · cwd · git branch · model · session cost · context used · 5h rate limit bar
+# Claude Code statusline, two lines:
+#   1: brand + model (matching color) · session cost · context used · 5h rate limit bar
+#   2: cwd · git branch
+# Segments are joined with powerline arrow separators.
 #
 # Env vars:
-#   CLAUDE_STATUSLINE_ASCII=1     force plain ASCII (no color, no unicode bars)
-#   CLAUDE_STATUSLINE_POWERLINE=1 use a powerline arrow () as the segment separator
+#   CLAUDE_STATUSLINE_ASCII=1     force plain ASCII (no color, no unicode bars/separators)
 #   COLORTERM=truecolor|24bit     enables the 24-bit gradient bars (set by most modern terminals)
 #
 # Rendering cascades three tiers: truecolor gradient -> 256-color gradient -> ASCII,
@@ -11,7 +13,6 @@
 set -uo pipefail
 
 USE_ASCII="${CLAUDE_STATUSLINE_ASCII:-0}"
-USE_POWERLINE="${CLAUDE_STATUSLINE_POWERLINE:-0}"
 USE_TRUECOLOR=0
 if [[ "${COLORTERM:-}" == "truecolor" || "${COLORTERM:-}" == "24bit" ]]; then
   USE_TRUECOLOR=1
@@ -31,12 +32,11 @@ five_hour=$(jq -r '.rate_limits.five_hour.used_percentage // empty' <<<"$input")
 five_reset=$(jq -r '.rate_limits.five_hour.resets_at // empty' <<<"$input")
 
 if [[ "$USE_ASCII" == "1" ]]; then
-  RESET='' DIM='' CYAN='' BLUE='' GREEN='' YELLOW='' RED='' MAGENTA='' GOLD='' PURPLE=''
+  RESET='' DIM='' CYAN='' GREEN='' YELLOW='' RED='' MAGENTA='' GOLD='' PURPLE=''
 else
   RESET='\033[0m'
   DIM='\033[2m'
   CYAN='\033[36m'
-  BLUE='\033[34m'
   GREEN='\033[32m'
   YELLOW='\033[33m'
   RED='\033[31m'
@@ -50,19 +50,16 @@ else
   fi
 fi
 
-# Symbols and separator per tier.
+# Symbols and separator per tier. Non-ASCII always uses the powerline arrow;
+# it needs a Nerd/powerline font, same requirement as the gradient bar blocks.
 if [[ "$USE_ASCII" == "1" ]]; then
   S_BRAND='<>'
   S_BRANCH='>'
   SEP=' | '
-elif [[ "$USE_POWERLINE" == "1" ]]; then
-  S_BRAND='◆'
-  S_BRANCH='⎇'
-  SEP='  '
 else
   S_BRAND='◆'
   S_BRANCH='⎇'
-  SEP=' · '
+  SEP='  '
 fi
 
 # 10-step green -> yellow -> red gradients, one per rendering tier.
@@ -159,16 +156,20 @@ else
   five_part=""
 fi
 
-printf "${PURPLE}%b${RESET} " "$S_BRAND"
-printf "${CYAN}%s${RESET}" "$dir"
-if [ -n "$branch" ]; then
-  printf "%b${MAGENTA}%b%s${RESET}" "$SEP" "$S_BRANCH" "$branch"
-fi
-printf "%b${BLUE}%s${RESET}%b${GOLD}%s${RESET}" "$SEP" "$model" "$SEP" "$cost_fmt"
+# Line 1: brand + model (matching color) · cost · ctx · 5h bar
+printf "${PURPLE}%b %s${RESET}" "$S_BRAND" "$model"
+printf "%b${GOLD}%s${RESET}" "$SEP" "$cost_fmt"
 if [ -n "$ctx_part" ]; then
   printf "%b%b" "$SEP" "$ctx_part"
 fi
 if [ -n "$five_part" ]; then
   printf "%b%b" "$SEP" "$five_part"
+fi
+printf '\n'
+
+# Line 2: cwd · git branch
+printf "${CYAN}%s${RESET}" "$dir"
+if [ -n "$branch" ]; then
+  printf "%b${MAGENTA}%b%s${RESET}" "$SEP" "$S_BRANCH" "$branch"
 fi
 printf '\n'

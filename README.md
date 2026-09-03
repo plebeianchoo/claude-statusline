@@ -3,12 +3,14 @@
 A custom statusline for [Claude Code](https://claude.com/claude-code).
 
 ```
-◆ ~/projects/demo · ⎇main · Opus 5 · $1.23 · ctx 38% · ████░░░░░░ 38% 2h14m left
+◆ Opus 5  $1.23  ctx 38%  ████░░░░░░ 38% 2h14m left
+~/projects/demo  ⎇main
 ```
 
-Shows, left to right: brand mark · working directory · git branch (with a
-branch icon) · model · session cost · context window used as a percentage ·
-5-hour rate-limit usage as a gradient bar, with time until the window resets.
+Two lines, segments joined by powerline arrows. Line 1: brand mark + model
+(same color) · session cost · context window used as a percentage · 5-hour
+rate-limit usage as a gradient bar, with time until the window resets. Line
+2: working directory · git branch (with a branch icon).
 
 Both percentages read as *consumption* and climb toward their limit, colored
 green, yellow from 70%, red from 90%. The payload reports context as
@@ -23,9 +25,10 @@ Color capability cascades through three tiers, picked once per run:
    modern terminals set this automatically).
 2. **256-color** — the same gradient shape approximated with `\033[38;5;Nm`
    codes. The default when true color isn't detected.
-3. **ASCII** — no color codes or Unicode at all; bars render as `#`/`-` and
-   the brand mark as `<>`. Force it with `CLAUDE_STATUSLINE_ASCII=1` for
-   dumb terminals, logging, or copy-pasting the statusline as plain text.
+3. **ASCII** — no color codes or Unicode at all; bars render as `#`/`-`, the
+   brand mark as `<>`, and the segment separator as a plain `|` instead of
+   the powerline arrow. Force it with `CLAUDE_STATUSLINE_ASCII=1` for dumb
+   terminals, logging, or copy-pasting the statusline as plain text.
 
 ## Configuration
 
@@ -33,9 +36,11 @@ Environment variables (set in `~/.zshrc` or `~/.bashrc`):
 
 | Variable | Default | Effect |
 |---|---|---|
-| `CLAUDE_STATUSLINE_ASCII` | `0` | `1` forces the plain ASCII tier, no color |
-| `CLAUDE_STATUSLINE_POWERLINE` | `0` | `1` swaps the ` · ` segment separator for a powerline arrow (``) — needs a Nerd/powerline font |
+| `CLAUDE_STATUSLINE_ASCII` | `0` | `1` forces the plain ASCII tier: no color, no gradient bars, `|` separators instead of powerline arrows |
 | `COLORTERM` | unset | `truecolor` or `24bit` enables the true-color gradient tier |
+
+The powerline arrow separator (``) needs a Nerd/powerline font — same
+requirement as the gradient bar's block characters.
 
 ## Install
 
