@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Claude Code statusline: brand · cwd · git branch · model · session cost · context left · 5h rate limit
+# Claude Code statusline: brand · cwd · git branch · model · session cost · context used · 5h rate limit bar
 #
 # Env vars:
 #   CLAUDE_STATUSLINE_ASCII=1     force plain ASCII (no color, no unicode bars)
@@ -122,8 +122,7 @@ if [ -n "$remaining" ]; then
   else
     ctx_color=$GREEN
   fi
-  render_bar "$used_int"
-  ctx_part=$(printf '%s %b%d%%%b' "$bar_out" "$ctx_color" "$used_int" "$RESET")
+  ctx_part=$(printf '%bctx %d%%%b' "$ctx_color" "$used_int" "$RESET")
 else
   ctx_part=""
 fi

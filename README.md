@@ -3,16 +3,16 @@
 A custom statusline for [Claude Code](https://claude.com/claude-code).
 
 ```
-◆ ~/projects/demo · ⎇main · Opus 5 · $1.23 · ████░░░░░░ 38% · ████░░░░░░ 38% 2h14m left
+◆ ~/projects/demo · ⎇main · Opus 5 · $1.23 · ctx 38% · ████░░░░░░ 38% 2h14m left
 ```
 
 Shows, left to right: brand mark · working directory · git branch (with a
-branch icon) · model · session cost · context window used as a gradient bar ·
+branch icon) · model · session cost · context window used as a percentage ·
 5-hour rate-limit usage as a gradient bar, with time until the window resets.
 
-Both bars read as *consumption* and climb toward their limit, colored green,
-yellow from 70%, red from 90%. The payload reports context as remaining, so
-the script inverts it.
+Both percentages read as *consumption* and climb toward their limit, colored
+green, yellow from 70%, red from 90%. The payload reports context as
+remaining, so the script inverts it.
 
 ## Rendering tiers
 
