@@ -2,7 +2,7 @@
 # Claude Code statusline, two lines:
 #   1: brand + model (matching color) · session cost · context used · 5h rate limit bar
 #   2: cwd · git branch
-# Segments are joined with powerline arrow separators.
+# Segments are joined with a straight powerline-style divider (│).
 #
 # Env vars:
 #   CLAUDE_STATUSLINE_ASCII=1     force plain ASCII (no color, no unicode bars/separators)
@@ -50,8 +50,8 @@ else
   fi
 fi
 
-# Symbols and separator per tier. Non-ASCII always uses the powerline arrow;
-# it needs a Nerd/powerline font, same requirement as the gradient bar blocks.
+# Symbols and separator per tier. Non-ASCII always uses a straight powerline
+# divider (│), no Nerd font required — it's a plain box-drawing character.
 if [[ "$USE_ASCII" == "1" ]]; then
   S_BRAND='<>'
   S_BRANCH='>'
@@ -59,7 +59,7 @@ if [[ "$USE_ASCII" == "1" ]]; then
 else
   S_BRAND='◆'
   S_BRANCH='⎇'
-  SEP='  '
+  SEP=' \u2502 '
 fi
 
 # 10-step green -> yellow -> red gradients, one per rendering tier.
