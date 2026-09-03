@@ -3,7 +3,7 @@
 A custom statusline for [Claude Code](https://claude.com/claude-code).
 
 ```
-◆ Opus 5 │ $1.23 │ ctx 38% │ ▐▐▐▐▐▐▐▐░░░░░░░░░░░░ 38% 2h14m left
+◆ Opus 5 │ $1.23 │ ctx 38% │ ▐▐▐▐░░░░░░ 38% 2h14m left
 ~/projects/demo │ ⎇main
 ```
 
@@ -23,17 +23,18 @@ inverts it.
 Color capability cascades through three tiers, picked once per run:
 
 1. **True color** — a smooth 24-bit rainbow gradient (violet→blue→cyan→
-   green→yellow→orange→red) across 40 steps. The bar is 20 terminal columns
+   green→yellow→orange→red) across 20 steps. The bar is 10 terminal columns
    wide, and each column is a half-block glyph (`▐`) whose background paints
    its left half and foreground its right half — two independent gradient
    colors per column, since that's the most a single terminal cell can carry
-   (one fg + one bg slot; there's no way to fit more colors into one glyph).
-   Enabled when `COLORTERM=truecolor` or `COLORTERM=24bit` (most modern
-   terminals set this automatically).
-2. **256-color** — the same 20-column/40-step shape approximated with
+   (one fg + one bg slot; there's no way to fit more colors into one glyph,
+   so 20 steps at 10 columns is the ceiling). Enabled when
+   `COLORTERM=truecolor` or `COLORTERM=24bit` (most modern terminals set
+   this automatically).
+2. **256-color** — the same 10-column/20-step shape approximated with
    `\033[38;5;Nm`/`\033[48;5;Nm` codes. The default when true color isn't
    detected.
-3. **ASCII** — no color codes or Unicode at all; the bar becomes 20 plain
+3. **ASCII** — no color codes or Unicode at all; the bar becomes 10 plain
    `#`/`-` characters (one fill test per column, no sub-column split since
    there's no color to carry it), the brand mark becomes `<>`, and the
    segment separator becomes a plain `|` instead of the straight divider

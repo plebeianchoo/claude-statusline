@@ -74,21 +74,20 @@ else
   SEP=' \u2502 '
 fi
 
-# 40-step rainbow gradient (violet -> red): 20 terminal columns, 2 sub-steps
+# 20-step rainbow gradient (violet -> red): 10 terminal columns, 2 sub-steps
 # each. Each column is a half-block glyph (▐) whose background carries the
 # left sub-step's color and whose foreground carries the right sub-step's —
-# a terminal cell only has two color slots (fg/bg), so this is the ceiling
-# for color resolution per column; going further needs more columns, not
-# more colors per column.
-GRAD_R=(204 173 141 110 78 47 16 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 8 39 71 102 133 165 196 228 255 255 255 255 255 255 255 255 255)
-GRAD_G=(0 0 0 0 0 0 0 16 47 78 110 141 173 204 235 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 251 220 188 157 126 94 63 31 0)
-GRAD_B=(255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 243 212 180 149 118 86 55 24 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-GRAD256=(165 129 129 93 93 57 21 21 27 33 33 39 39 45 51 51 50 50 49 48 48 47 46 46 82 82 118 154 154 190 190 226 220 220 214 208 208 202 202 196)
+# a terminal cell only has two color slots (fg/bg), so 2 steps per column is
+# the ceiling; at 10 columns that caps total resolution at 20 steps, not 40.
+GRAD_R=(204 140 75 11 0 0 0 0 0 0 0 0 59 123 188 252 255 255 255 255)
+GRAD_G=(0 0 0 0 54 118 183 247 255 255 255 255 255 255 255 255 193 129 64 0)
+GRAD_B=(255 255 255 255 255 255 255 255 199 134 70 5 0 0 0 0 0 0 0 0)
+GRAD256=(165 129 57 21 27 33 45 51 50 49 47 46 82 118 190 226 220 214 202 196)
 
-# render_bar PCT -> writes a 20-column/40-step gradient (or plain ASCII) bar
+# render_bar PCT -> writes a 10-column/20-step gradient (or plain ASCII) bar
 # (raw escape bytes) to $bar_out
 render_bar() {
-  local pct=$1 cols=20 steps=40 filled i p0 p1 bar=""
+  local pct=$1 cols=10 steps=20 filled i p0 p1 bar=""
   filled=$(( (pct * steps + 99) / 100 ))
   (( filled > steps )) && filled=$steps
   (( filled < 0 )) && filled=0
