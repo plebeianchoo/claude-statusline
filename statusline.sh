@@ -65,9 +65,12 @@ if [ -n "$five_hour" ]; then
   five_fmt=$(printf '%b %d%%' "$bar" "$five_int")
   five_part="${five_color}${five_fmt}${RESET}"
 
-  # Time left until the 5h window resets
-  if [ -n "$five_reset" ]; then
-    secs=$(( ${five_reset%.*} - $(date +%s) ))
+  # Time left until the 5h window resets. Guard the arithmetic: resets_at is an
+  # epoch integer today, but a non-numeric value would otherwise make bash emit
+  # an error straight into the statusline. Skip the countdown instead.
+  five_epoch=${five_reset%.*}
+  if [[ $five_epoch =~ ^[0-9]+$ ]]; then
+    secs=$(( five_epoch - $(date +%s) ))
     if [ "$secs" -gt 0 ]; then
       mins=$(( (secs + 59) / 60 ))   # round up, so it never reads 0m while time remains
       if [ "$mins" -ge 60 ]; then
